@@ -1,9 +1,8 @@
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 import java.awt.Container;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 public class JSwinger implements MouseListener {
     int gridSize = 20;
     int numberOfBombs = 30;
+    int numberOfFlags = numberOfBombs;
     final int MINE = 10;
     JFrame game = new JFrame("JSwinger");
     JButton smiley = new JButton("Reset Button");
@@ -141,7 +141,20 @@ public class JSwinger implements MouseListener {
     }
 
     public void checkWin(){
-
+        boolean win = true;
+        for (int x = 0; x < gridSize; x++){
+            if (win){
+                for (int y = 0; y < gridSize; y++){
+                    if (buttonValues[x][y] != MINE && buttons[x][y].isEnabled() == true){
+                        win = false;
+                        break;
+                    }
+                }
+            }
+        }
+        if (win){
+            JOptionPane.showMessageDialog(game, "You win!");
+        }
     }
 
     public void openEmpty(ArrayList<Integer> toOpen){
@@ -238,7 +251,7 @@ public class JSwinger implements MouseListener {
                 for (int y = 0; y < gridSize; y++){
                     buttons[x][y].setEnabled(true);
                     buttons[x][y].setText("");
-                    if (buttonValues[x][y] == MINE){
+                    if (buttonValues[x][y] == MINE || buttons[x][y].getBackground() == Color.yellow){
                         buttons[x][y].setBackground(null);
                     }
                 }
@@ -250,30 +263,42 @@ public class JSwinger implements MouseListener {
             for (int x = 0; x < gridSize; x++){
                 for (int y = 0; y < gridSize; y++){
                     if (event.getSource().equals(buttons[x][y])){
-                        int mod = event.getModifiers();
                         // Right click to place a flag
                         if (SwingUtilities.isRightMouseButton(event)) {
-                            System.out.println("Right button pressed.");
+                            if (buttons[x][y].isEnabled() && numberOfFlags != 0 && buttons[x][y].getBackground() != Color.yellow){
+                                buttons[x][y].setBackground(Color.yellow);
+                                buttons[x][y].setEnabled(false);
+                                numberOfFlags--;
+                            }
+                            else if (buttons[x][y].getBackground() == Color.yellow){
+                                buttons[x][y].setBackground(null);
+                                buttons[x][y].setEnabled(true);
+                                numberOfFlags++;
+                            }
+                            System.out.println(numberOfFlags);
                         }
-                        // Left click to reveal a square
-                        else if (SwingUtilities.isLeftMouseButton(event)) {
+                        // Left click to reveal a square if it isn't flagged
+                        else if (SwingUtilities.isLeftMouseButton(event) && buttons[x][y].isEnabled()) {
                             // Game over if it is a mine
                             if (buttonValues[x][y] == MINE){
                                 gameOver();
                             }
+                            // Reveal empty squares nearby if clicked on a 0
                             else if (buttonValues[x][y] == 0){
                                 buttons[x][y].setText(buttonValues[x][y] + "");
                                 buttons[x][y].setEnabled(false);
                                 ArrayList<Integer> toOpen = new ArrayList<Integer>();
                                 toOpen.add(x*100+y);
                                 openEmpty(toOpen);
+                                checkWin();
                             }
+                            // Reveal the clicked square
                             else {
                                 buttons[x][y].setText(buttonValues[x][y] + "");
                                 buttons[x][y].setEnabled(false);
+                                checkWin();
                             }
                         }
-
                     }
                 }
             }
