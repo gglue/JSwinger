@@ -2,6 +2,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingConstants;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import java.awt.Container;
 import java.awt.BorderLayout;
@@ -13,6 +16,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import java.util.ArrayList;
+import java.time.Instant;
+import java.time.Duration;
+
+
+
 
 public class JSwinger implements MouseListener {
     int gridSize = 20;
@@ -21,12 +29,16 @@ public class JSwinger implements MouseListener {
     final int MINE = 10;
     JFrame game = new JFrame("JSwinger");
     JButton smiley = new JButton("Reset Button");
+    JLabel flagLabel = new JLabel(String.format("%d flags", numberOfFlags));
+    JPanel topHUD = new JPanel();
     JButton[][] buttons = new JButton[gridSize][gridSize];
     int[][] buttonValues = new int[gridSize][gridSize];
     Container grid = new Container();
+
+    Instant startTime = Instant.now();
     public JSwinger() {
         // Set up the window
-        game.setSize(400, 500);
+        game.setSize(1000, 800);
         game.setLayout(new BorderLayout());
 
         // Set up the grid buttons
@@ -44,9 +56,13 @@ public class JSwinger implements MouseListener {
         game.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         game.setVisible(true);
 
+        game.add(topHUD, BorderLayout.PAGE_START);
+        topHUD.add(flagLabel);
         // Set up the reset button at the top
-        game.add(smiley, BorderLayout.NORTH);
+        topHUD.add(smiley);
         smiley.addMouseListener(this);
+
+
     }
 
     public void placeRandomMines(){
@@ -153,7 +169,9 @@ public class JSwinger implements MouseListener {
             }
         }
         if (win){
-            JOptionPane.showMessageDialog(game, "You win!");
+            Instant endTime = Instant.now();
+            Duration elapsedTime = Duration.between(startTime, endTime);
+            JOptionPane.showMessageDialog(game, String.format("You win at %d seconds since the program launched!", (int)elapsedTime.getSeconds()));
         }
     }
 
@@ -247,6 +265,11 @@ public class JSwinger implements MouseListener {
     public void mouseClicked(MouseEvent event) {
         // Smiley button resets the game
         if (event.getSource().equals(smiley)){
+            // Reset flag number
+            numberOfFlags = numberOfBombs;
+            // Reset time
+            flagLabel.setText(String.format("%d flags",numberOfFlags));
+
             for (int x = 0; x < gridSize; x++){
                 for (int y = 0; y < gridSize; y++){
                     buttons[x][y].setEnabled(true);
@@ -265,6 +288,7 @@ public class JSwinger implements MouseListener {
                     if (event.getSource().equals(buttons[x][y])){
                         // Right click to place a flag
                         if (SwingUtilities.isRightMouseButton(event)) {
+                            // Only allow if it isn't already yellow
                             if (buttons[x][y].isEnabled() && numberOfFlags != 0 && buttons[x][y].getBackground() != Color.yellow){
                                 buttons[x][y].setBackground(Color.yellow);
                                 buttons[x][y].setEnabled(false);
@@ -275,7 +299,7 @@ public class JSwinger implements MouseListener {
                                 buttons[x][y].setEnabled(true);
                                 numberOfFlags++;
                             }
-                            System.out.println(numberOfFlags);
+                            flagLabel.setText(String.format("%d flags",numberOfFlags));
                         }
                         // Left click to reveal a square if it isn't flagged
                         else if (SwingUtilities.isLeftMouseButton(event) && buttons[x][y].isEnabled()) {
