@@ -1,5 +1,6 @@
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -7,10 +8,14 @@ import java.awt.Container;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.Color;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import java.util.ArrayList;
 
-public class JSwinger implements ActionListener {
+public class JSwinger implements MouseListener {
     int gridSize = 20;
     int numberOfBombs = 30;
     final int MINE = 10;
@@ -24,13 +29,12 @@ public class JSwinger implements ActionListener {
         game.setSize(400, 500);
         game.setLayout(new BorderLayout());
 
-
         // Set up the grid buttons
         grid.setLayout(new GridLayout(gridSize, gridSize));
         for (int x = 0; x < gridSize; x++){
             for (int y = 0; y < gridSize; y++){
                 buttons[x][y] = new JButton();
-                buttons[x][y].addActionListener(this);
+                buttons[x][y].addMouseListener(this);
                 grid.add(buttons[x][y]);
             }
         }
@@ -42,7 +46,7 @@ public class JSwinger implements ActionListener {
 
         // Set up the reset button at the top
         game.add(smiley, BorderLayout.NORTH);
-        smiley.addActionListener(this);
+        smiley.addMouseListener(this);
     }
 
     public void placeRandomMines(){
@@ -227,7 +231,7 @@ public class JSwinger implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent event){
+    public void mouseClicked(MouseEvent event) {
         // Smiley button resets the game
         if (event.getSource().equals(smiley)){
             for (int x = 0; x < gridSize; x++){
@@ -246,25 +250,46 @@ public class JSwinger implements ActionListener {
             for (int x = 0; x < gridSize; x++){
                 for (int y = 0; y < gridSize; y++){
                     if (event.getSource().equals(buttons[x][y])){
-                        // Game over if it is a mine
-                        if (buttonValues[x][y] == MINE){
-                            gameOver();
+                        int mod = event.getModifiers();
+                        // Right click to place a flag
+                        if (SwingUtilities.isRightMouseButton(event)) {
+                            System.out.println("Right button pressed.");
                         }
-                        else if (buttonValues[x][y] == 0){
-                            buttons[x][y].setText(buttonValues[x][y] + "");
-                            buttons[x][y].setEnabled(false);
-                            ArrayList<Integer> toOpen = new ArrayList<Integer>();
-                            toOpen.add(x*100+y);
-                            openEmpty(toOpen);
+                        // Left click to reveal a square
+                        else if (SwingUtilities.isLeftMouseButton(event)) {
+                            // Game over if it is a mine
+                            if (buttonValues[x][y] == MINE){
+                                gameOver();
+                            }
+                            else if (buttonValues[x][y] == 0){
+                                buttons[x][y].setText(buttonValues[x][y] + "");
+                                buttons[x][y].setEnabled(false);
+                                ArrayList<Integer> toOpen = new ArrayList<Integer>();
+                                toOpen.add(x*100+y);
+                                openEmpty(toOpen);
+                            }
+                            else {
+                                buttons[x][y].setText(buttonValues[x][y] + "");
+                                buttons[x][y].setEnabled(false);
+                            }
+                        }
 
-                        }
-                        else {
-                            buttons[x][y].setText(buttonValues[x][y] + "");
-                            buttons[x][y].setEnabled(false);
-                        }
                     }
                 }
             }
         }
     }
+    @Override
+    public void mouseEntered(MouseEvent event) {
+    }
+    @Override
+    public void mouseExited(MouseEvent event) {
+    }
+    @Override
+    public void mousePressed(MouseEvent event) {
+    }
+    @Override
+    public void mouseReleased(MouseEvent event) {
+    }
+
 }
